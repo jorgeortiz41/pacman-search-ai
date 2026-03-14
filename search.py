@@ -17,7 +17,7 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
-import util
+from util import Stack, Queue, PriorityQueue
 from game import Directions
 from typing import List
 
@@ -89,18 +89,81 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_state = problem.getStartState()
+    if problem.isGoalState(start_state):
+        return []
+
+    frontier = Stack()
+    frontier.push((start_state, []))
+    visited = set()
+
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, _ in problem.getSuccessors(state):
+            if successor not in visited:
+                frontier.push((successor, actions + [action]))
+
+    return []
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_state = problem.getStartState()
+    if problem.isGoalState(start_state):
+        return []
+
+    frontier = Queue()
+    frontier.push((start_state, []))
+    visited = set([start_state])
+
+    while not frontier.isEmpty():
+        state, actions = frontier.pop()
+
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, _ in problem.getSuccessors(state):
+            if successor not in visited:
+                visited.add(successor)
+                frontier.push((successor, actions + [action]))
+
+    return []
+
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start_state = problem.getStartState()
+    if problem.isGoalState(start_state):
+        return []
+
+    frontier = PriorityQueue()
+    frontier.push((start_state, [], 0), 0)
+    best_cost = {start_state: 0}
+
+    while not frontier.isEmpty():
+        state, actions, cost = frontier.pop()
+
+        if problem.isGoalState(state):
+            return actions
+
+        if cost > best_cost.get(state, float('inf')):
+            continue
+
+        for successor, action, step_cost in problem.getSuccessors(state):
+            new_cost = cost + step_cost
+            if new_cost < best_cost.get(successor, float('inf')):
+                best_cost[successor] = new_cost
+                frontier.push((successor, actions + [action], new_cost), new_cost)
+
+    return []
 
 def nullHeuristic(state, problem=None) -> float:
     """
@@ -111,8 +174,34 @@ def nullHeuristic(state, problem=None) -> float:
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+
+    start_state = problem.getStartState()
+    if problem.isGoalState(start_state):
+        return []
+
+    frontier = PriorityQueue()
+    start_priority = heuristic(start_state, problem)
+    frontier.push((start_state, [], 0), start_priority)
+    best_cost = {start_state: 0}
+
+    while not frontier.isEmpty():
+        state, actions, cost = frontier.pop()
+
+        if problem.isGoalState(state):
+            return actions
+
+        if cost > best_cost.get(state, float('inf')):
+            continue
+
+        for successor, action, step_cost in problem.getSuccessors(state):
+            new_cost = cost + step_cost
+            if new_cost < best_cost.get(successor, float('inf')):
+                best_cost[successor] = new_cost
+                priority = new_cost + heuristic(successor, problem)
+                frontier.push((successor, actions + [action], new_cost), priority)
+
+    return []
 
 # Abbreviations
 bfs = breadthFirstSearch
